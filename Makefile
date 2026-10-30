@@ -51,3 +51,7 @@ trivy:
 
 install-trivy:
 	curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.76.1
+
+check-v0:
+	git checkout v0-Very-Bad-way-toDo
+
