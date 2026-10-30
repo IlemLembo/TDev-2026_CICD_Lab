@@ -1,10 +1,10 @@
-name: TDev CI - Step 3 Semgrep SAST
+name: TDev CI - Step 4 Secret Detection (Gitleaks)
 
 on:
   push:
-    branches: [ "v3-semgrep", "v3-+semgrep" ]
+    branches: [ "v4-gitleaks", "v4-+gitleaks" ]
   pull_request:
-    branches: [ "v3-semgrep", "v3-+semgrep" ]
+    branches: [ "v4-gitleaks", "v4-+gitleaks" ]
 
 jobs:
   linting-stage:
@@ -68,3 +68,18 @@ jobs:
         uses: semgrep/semgrep-action@v1
         with:
           config: auto
+
+  gitleaks-secrets:
+    name: 🔑 4. Secret Scanning (Gitleaks)
+    runs-on: ubuntu-latest
+    needs: security-sast
+    steps:
+      - name: Checkout code (fetch depth 0 pour analyser tout l'historique)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

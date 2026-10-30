@@ -61,7 +61,7 @@ check-linting-only:
 	uv run ruff format --check .
 
 fix-linting-only:
-	uv run ruff format --fix .
-	uv run ruff check .
+	uv run ruff format -- .
+	uv run ruff check --fix .
 	uv run ruff format --check .
 

@@ -14,24 +14,31 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
-from django.urls import path, re_path, include
+from django.urls import include, path, re_path
+from rest_framework.routers import DefaultRouter
+
+from api.viewsets import BlogViewSet, CommentViewSet, LoginViewSet
 from blog_project.swagger import schema_view
 
-from api.viewsets import LoginViewSet, BlogViewSet, CommentViewSet
-
-from rest_framework.routers import DefaultRouter
 api_router = DefaultRouter()
-api_router.register(r'login', LoginViewSet, basename='login')
-api_router.register(r'blogs', BlogViewSet, basename='blogs')
-api_router.register(r'comments', CommentViewSet, basename='comments')
+api_router.register(r"login", LoginViewSet, basename="login")
+api_router.register(r"blogs", BlogViewSet, basename="blogs")
+api_router.register(r"comments", CommentViewSet, basename="comments")
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', include(api_router.urls)),
-
-    
-    re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
-    path('swagger', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    path('redoc', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path("admin/", admin.site.urls),
+    path("api/", include(api_router.urls)),
+    re_path(
+        r"^swagger(?P<format>\.json|\.yaml)$",
+        schema_view.without_ui(cache_timeout=0),
+        name="schema-json",
+    ),
+    path(
+        "swagger",
+        schema_view.with_ui("swagger", cache_timeout=0),
+        name="schema-swagger-ui",
+    ),
+    path("redoc", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
 ]
