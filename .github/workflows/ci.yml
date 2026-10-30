@@ -1,0 +1,72 @@
+name: TDev Securing The Future CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  devsecops-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Récupération du code source
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Installation de l'outil uv (rapide et moderne pour Python)
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          # 3. Configuration de Python via uv
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 4. Installation des dépendances du projet
+      - name: Install dependencies
+        run: |
+          uv sync --frozen
+
+      # 5. Étape Sécurité : Analyse des dépendances (Safety)
+      # C'est ici que ta dépendance vulnérable (pyyaml==5.3) va déclencher une alerte !
+      - name: Run Safety Check (SCA)
+        run: |
+          uv add safety
+          uv run safety check || echo "Vulnérabilités détectées (Attendu pour la démo)"
+          # 6. Étape Sécurité : Analyse statique du code (Semgrep)
+
+      - name: Run Semgrep SAST
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: auto
+        
+      - name: Run trivy
+        uses: aquasecurity/trivy-action@v0.9.0
+        with:
+          scan-type: 'fs'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+
+      # 7. Étape Build : Construction de l'image Docker (Vérification du Dockerfile)
+      - name: Build Docker Image
+        run: |
+          docker build -t tdev-blog-app:latest .
+
+      # 8. (Optionnel / Avancé) Lancement de l'app pour un scan DAST basique avec OWASP ZAP
+      - name: Run App Container for ZAP
+        run: |
+          docker run -d -p 8000:8000 --name blog-app tdev-blog-app:latest
+          sleep 5 # Attendre que Django démarre
+
+      - name: OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:8000/'
+          fail_action: false # Mis à false pour éviter de bloquer la démo si des alertes mineures tombent

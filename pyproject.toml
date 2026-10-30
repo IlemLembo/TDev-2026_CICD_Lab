@@ -1,0 +1,33 @@
+[project]
+name = "tdev-2026-cicd-lab"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "IlemLembo", email = "lemboilem@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "django==4.2.0",
+    "django-cors-headers>=4.9.0",
+    "djangorestframework>=3.17.2",
+    "djangorestframework-simplejwt>=5.5.1",
+    "drf-spectacular>=0.30.0",
+    "drf-spectacular-sidecar>=2026.10.1",
+    "drf-yasg>=1.21.18",
+    "pyyaml==5.3",
+]
+
+[project.scripts]
+tdev-2026-cicd-lab = "tdev_2026_cicd_lab:main"
+
+[build-system]
+requires = ["uv_build>=0.12.9,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.17.3",
+    "safety>=3.8.1",
+    "semgrep>=1.183.0",
+]
