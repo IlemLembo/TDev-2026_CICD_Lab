@@ -1569,6 +1569,7 @@ dependencies = [
     { name = "drf-spectacular-sidecar" },
     { name = "drf-yasg" },
     { name = "pyyaml" },
+    { name = "ruff" },
 ]
 
 [package.dev-dependencies]
@@ -1588,6 +1589,7 @@ requires-dist = [
     { name = "drf-spectacular-sidecar", specifier = ">=2026.10.1" },
     { name = "drf-yasg", specifier = ">=1.21.18" },
     { name = "pyyaml", specifier = "==5.3" },
+    { name = "ruff", specifier = ">=0.17.3" },
 ]
 
 [package.metadata.requires-dev]

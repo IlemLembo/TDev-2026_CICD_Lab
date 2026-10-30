@@ -55,3 +55,13 @@ install-trivy:
 check-v0:
 	git checkout v0-Very-Bad-way-toDo
 
+check-linting-only:
+	uv add ruff
+	uv run ruff check .
+	uv run ruff format --check .
+
+fix-linting-only:
+	uv run ruff format --fix .
+	uv run ruff check .
+	uv run ruff format --check .
+
