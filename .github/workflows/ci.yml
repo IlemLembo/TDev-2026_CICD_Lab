@@ -1,113 +1,36 @@
-name: TDev CI/CD - Segmented Pipeline
+name: TDev CI - Step 1 Linting Only
 
 on:
   push:
-    branches: [ "main", "master", "v*-*" ]
+    branches: [ "v1-linting-only" ]
   pull_request:
-    branches: [ "main", "master", "v*-*" ]
+    branches: [ "v1-linting-only" ]
 
 jobs:
-  # 1. Étape de Linting (Ruff)
-  lint:
-    name: 1. Ruff Linting
+  linting-stage:
+    name: 🎨 Code Quality & Linting (Ruff)
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: 📥 1. Checkout repository source code
         uses: actions/checkout@v4
 
-      - name: Set up uv
+      - name: ⚡ 2. Set up ultra-fast uv package manager
         uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
 
-      - name: Set up Python
+      - name: 🐍 3. Set up Python environment
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
-        run: uv sync --frozen
+      - name: 📦 4. Install project dependencies via uv
+        run: |
+          uv sync --frozen
 
-      - name: Run ruff linter
+      - name: 🔍 5. Run Ruff Linter & Formatter Check
         run: |
           uv add ruff
           uv run ruff check .
-
-  # 2. Étape SCA - Analyse des dépendances (Safety)
-  security-sca:
-    name: 2. Safety SCA (Dependencies)
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: uv sync --frozen
-
-      - name: Run Safety Check
-        run: |
-          uv add safety
-          uv run safety check
-
-  # 3. Étape SAST - Analyse statique du code (Semgrep)
-  security-sast:
-    name: 3. Semgrep SAST
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Semgrep SAST
-        uses: semgrep/semgrep-action@v1
-        with:
-          config: auto
-
-  # 4. Étape Scan de conteneur (Trivy Filesystem/Image)
-  container-scan:
-    name: 4. Trivy Container Scan
-    runs-on: ubuntu-latest
-    needs: [security-sca, security-sast]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Trivy scanner
-        uses: aquasecurity/trivy-action@v0.9.0
-        with:
-          scan-type: 'fs'
-          severity: 'CRITICAL,HIGH'
-          format: 'table'
-          exit-code: '0' # Mis à 0 pour éviter de bloquer bêtement ta démo si tu veux juste observer
-
-  # 5. Étape Build Docker & DAST (OWASP ZAP)
-  dast-dynamic:
-    name: 5. Docker Build & OWASP ZAP
-    runs-on: ubuntu-latest
-    needs: container-scan
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build Docker Image
-        run: docker build -t tdev-blog-app:latest .
-
-      - name: Run App Container for ZAP
-        run: |
-          docker run -d -p 8000:8000 --name blog-app tdev-blog-app:latest
-          sleep 5
-
-      - name: OWASP ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.12.0
-        with:
-          target: 'http://localhost:8000/'
-          fail_action: false
+          uv run ruff format --check .
