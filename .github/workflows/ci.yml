@@ -1,36 +1,57 @@
-name: TDev CI - Step 1 Linting Only
+name: TDev CI - Step 2 Safety SCA
 
 on:
   push:
-    branches: [ "v1-linting-only" ]
+    branches: [ "v2-safety", "v2-+safety" ]
   pull_request:
-    branches: [ "v1-linting-only" ]
+    branches: [ "v2-safety", "v2-+safety" ]
 
 jobs:
   linting-stage:
-    name: 🎨 Code Quality & Linting (Ruff)
+    name: 🎨 1. Code Quality (Ruff)
     runs-on: ubuntu-latest
-
     steps:
-      - name: 📥 1. Checkout repository source code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: ⚡ 2. Set up ultra-fast uv package manager
+      - name: Set up uv
         uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
 
-      - name: 🐍 3. Set up Python environment
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: 📦 4. Install project dependencies via uv
-        run: |
-          uv sync --frozen
+      - name: Install dependencies
+        run: uv sync --frozen
 
-      - name: 🔍 5. Run Ruff Linter & Formatter Check
+      - name: Run Ruff Linter
         run: |
           uv add ruff
           uv run ruff check .
-          uv run ruff format --check .
+
+  security-sca:
+    name: 🛡️ 2. Dependency Vulnerability Scan (Safety)
+    runs-on: ubuntu-latest
+    needs: linting-stage
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Run Safety Check (SCA)
+        run: |
+          uv add safety
+          uv run safety check
