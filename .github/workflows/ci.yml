@@ -1,10 +1,10 @@
-name: TDev CI - Step 6 Dynamic App Scanning (OWASP ZAP)
+name: TDev CI/CD - Ultimate Production Pipeline
 
 on:
   push:
-    branches: [ "v6-dast-zap", "v6-+zap" ]
+    branches: [ "main", "master", "v7-production", "v7-*", "v7-production-ultimate" ]
   pull_request:
-    branches: [ "v6-dast-zap", "v6-+zap" ]
+    branches: [ "main", "master", "v7-production", "v7-*", "v7-production-ultimate" ]
 
 jobs:
   linting-stage:
@@ -12,15 +12,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@8f5b4af9862de04d03ac121e4b09b5ab0101918a # v5.3.0
         with:
           version: "latest"
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c212d93bf27216c9f24b135a513f4 # v5.4.0
         with:
           python-version: "3.11"
 
@@ -38,13 +38,13 @@ jobs:
     needs: linting-stage
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@8f5b4af9862de04d03ac121e4b09b5ab0101918a # v5.3.0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c212d93bf27216c9f24b135a513f4 # v5.4.0
         with:
           python-version: "3.11"
 
@@ -62,10 +62,10 @@ jobs:
     needs: security-sca
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Run Semgrep SAST
-        uses: semgrep/semgrep-action@v1
+        uses: semgrep/semgrep-action@73f6fbc59bb9321ff896599cc658b4daee33e89a # v1.111.0
         with:
           config: auto
 
@@ -75,32 +75,32 @@ jobs:
     needs: security-sast
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
 
       - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@65226f7300e33ef44efaf5d993bb271c6628fb65 # v2.3.8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   container-scan:
-    name: 🐳 5. Container Scan (Trivy)
+    name: 🐳 5. Container & Dockerfile Scan (Trivy)
     runs-on: ubuntu-latest
     needs: gitleaks-secrets
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Build Docker Image
         run: docker build -t tdev-blog-app:latest .
 
       - name: Run Trivy scanner
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@915b19fea73b25a671b5bbabf663f71b0b007ba0 # 0.28.0
         with:
           image-ref: 'tdev-blog-app:latest'
           format: 'table'
-          exit-code: '0'
+          exit-code: '1' # En mode prod, on bloque si des failles CRITICAL/HIGH sont détectées !
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
 
@@ -110,7 +110,7 @@ jobs:
     needs: container-scan
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Build Docker Image
         run: docker build -t tdev-blog-app:latest .
@@ -118,11 +118,10 @@ jobs:
       - name: Start Application Container
         run: |
           docker run -d -p 8000:8000 --name blog-app tdev-blog-app:latest
-          # Attente active du démarrage du serveur Django
           timeout 30s bash -c 'until curl -s http://localhost:8000/ > /dev/null; do sleep 1; done' || true
 
       - name: OWASP ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.12.0
+        uses: zaproxy/action-baseline@a6f370d061c5f35d55e0a6d0c73295c55047b640 # v0.12.0
         with:
           target: 'http://localhost:8000/'
-          fail_action: false # Ne bloque pas le pipeline, génère juste un rapport d'audit
+          fail_action: false
