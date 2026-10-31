@@ -51,3 +51,34 @@ trivy:
 
 install-trivy:
 	curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.76.1
+
+check-v0:
+	git checkout v0-Very-Bad-way-toDo
+
+check-linting-only:
+	uv add ruff
+	uv run ruff check .
+	uv run ruff format --check .
+
+fix-linting-only:
+	uv run ruff format -- .
+	uv run ruff check --fix .
+	uv run ruff format --check .
+
+# Lancer le conteneur de l'application en arrière-plan et exécuter le scan OWASP ZAP DAST
+dast-scan:
+	
+	@echo "📦 Démarrage du conteneur de l'application..."
+	@docker rm -f blog-app 2>/dev/null || true
+	docker run -d -p 8007:8000 --name blog-app tdev-blog-app:latest
+	
+	
+	@echo "🛡️ Lancement du scan OWASP ZAP Baseline..."
+	@docker run --rm -v $(PWD):/zap/wrk/:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+		-t http://host.docker.internal:8000/ \
+		-r zap-report.html || true
+	
+	@echo "🧹 Nettoyage du conteneur..."
+	@docker stop blog-app
+	@docker rm blog-app
+	@echo "✅ Scan DAST terminé ! Rapport généré : zap-report.html"
