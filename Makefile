@@ -67,15 +67,11 @@ fix-linting-only:
 
 # Lancer le conteneur de l'application en arrière-plan et exécuter le scan OWASP ZAP DAST
 dast-scan:
-	@echo "🚀 Build de l'image Docker..."
-	docker build -t tdev-blog-app:latest .
 	
 	@echo "📦 Démarrage du conteneur de l'application..."
 	@docker rm -f blog-app 2>/dev/null || true
-	docker run -d -p 8000:8000 --name blog-app tdev-blog-app:latest
+	docker run -d -p 8007:8000 --name blog-app tdev-blog-app:latest
 	
-	@echo "⏳ Attente du démarrage de Django..."
-	@until curl -s http://localhost:8000/ > /dev/null; do sleep 1; done
 	
 	@echo "🛡️ Lancement du scan OWASP ZAP Baseline..."
 	@docker run --rm -v $(PWD):/zap/wrk/:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
