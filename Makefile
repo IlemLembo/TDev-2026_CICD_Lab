@@ -65,3 +65,24 @@ fix-linting-only:
 	uv run ruff check --fix .
 	uv run ruff format --check .
 
+# Lancer le conteneur de l'application en arrière-plan et exécuter le scan OWASP ZAP DAST
+dast-scan:
+	@echo "🚀 Build de l'image Docker..."
+	docker build -t tdev-blog-app:latest .
+	
+	@echo "📦 Démarrage du conteneur de l'application..."
+	@docker rm -f blog-app 2>/dev/null || true
+	docker run -d -p 8000:8000 --name blog-app tdev-blog-app:latest
+	
+	@echo "⏳ Attente du démarrage de Django..."
+	@until curl -s http://localhost:8000/ > /dev/null; do sleep 1; done
+	
+	@echo "🛡️ Lancement du scan OWASP ZAP Baseline..."
+	@docker run --rm -v $(PWD):/zap/wrk/:rw -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+		-t http://host.docker.internal:8000/ \
+		-r zap-report.html || true
+	
+	@echo "🧹 Nettoyage du conteneur..."
+	@docker stop blog-app
+	@docker rm blog-app
+	@echo "✅ Scan DAST terminé ! Rapport généré : zap-report.html"
