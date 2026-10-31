@@ -82,3 +82,10 @@ dast-scan:
 	@docker stop blog-app
 	@docker rm blog-app
 	@echo "✅ Scan DAST terminé ! Rapport généré : zap-report.html"
+
+# Met à jour ton environnement local en conséquence
+# Met à jour le fichier uv.lock avec les dernières versions compatibles
+upgrade:
+	uv lock --upgrade
+
+	uv sync
